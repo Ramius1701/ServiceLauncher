@@ -1,0 +1,64 @@
+{
+  "ListenPort": 8090,
+  "TokenFile": "token.txt",
+  "LogFile": "launcher.log",
+
+  "Volumes": [
+    {
+      "Id": "servers",
+      "DriveLetter": "S",
+      "VhdxPath": "D:\\Allens_Stuff\\VHD\\Servers.vhdx"
+    }
+  ],
+
+  "Services": [
+    {
+      "Id": "robust",
+      "DisplayName": "Casperia-Dev Robust",
+      "RequiresVolume": "servers",
+      "ExePath": "S:\\Opensim\\Casperia-Dev\\Robust.exe",
+      "Arguments": "-inifile=Robust.HG.ini -background=true",
+      "WorkingDirectory": "S:\\Opensim\\Casperia-Dev",
+      "Liveness": { "Type": "http", "Url": "http://127.0.0.1:9002/store" },
+      "StartupTimeoutSeconds": 90,
+      "AutoLaunch": [
+        { "ServiceId": "sandbox", "DelaySeconds": 5 },
+        { "ServiceId": "welcome_center", "DelaySeconds": 10 }
+      ]
+    },
+    {
+      "Id": "sandbox",
+      "DisplayName": "Sandbox Region",
+      "RequiresVolume": "servers",
+      "ExePath": "S:\\Opensim\\Casperia-Dev\\OpenSim.exe",
+      "Arguments": "-inifile=Simulators\\Sandbox\\OpenSim.ini -background=true",
+      "WorkingDirectory": "S:\\Opensim\\Casperia-Dev",
+      "Liveness": { "Type": "http", "Url": "http://127.0.0.1:9018/" },
+      "StartupTimeoutSeconds": 60
+    },
+    {
+      "Id": "welcome_center",
+      "DisplayName": "Welcome Center Region",
+      "RequiresVolume": "servers",
+      "ExePath": "S:\\Opensim\\Casperia-Dev\\OpenSim.exe",
+      "Arguments": "-inifile=Simulators\\Welcome_Center\\OpenSim.ini -background=true",
+      "WorkingDirectory": "S:\\Opensim\\Casperia-Dev",
+      "Liveness": { "Type": "http", "Url": "http://127.0.0.1:9004/" },
+      "StartupTimeoutSeconds": 60
+    },
+
+    {
+      "Id": "majorbbs",
+      "DisplayName": "MajorBBS (EDIT ME - paths below are placeholders)",
+      "RequiresVolume": "servers",
+      "ExePath": "S:\\PATH\\TO\\YOUR\\wgsappgo.exe",
+      "Arguments": "",
+      "WorkingDirectory": "S:\\PATH\\TO\\YOUR\\BBS\\FOLDER",
+      "Liveness": {
+        "Type": "process",
+        "ProcessPath": "S:\\PATH\\TO\\YOUR\\wgsappgo.exe"
+      },
+      "StartupTimeoutSeconds": 60
+    }
+  ]
+}

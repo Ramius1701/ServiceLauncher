@@ -1,0 +1,9 @@
+bin/
+obj/
+
+# Real deployment config/secrets - services.example.json is the template
+# that ships; a real services.json is per-machine and never belongs in
+# version control.
+services.json
+token.txt
+launcher.log
