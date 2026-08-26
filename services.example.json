@@ -7,43 +7,49 @@
     {
       "Id": "servers",
       "DriveLetter": "S",
-      "VhdxPath": "D:\\Allens_Stuff\\VHD\\Servers.vhdx"
+      "VhdxPath": "D:\\PATH\\TO\\YOUR\\Servers.vhdx"
     }
   ],
 
   "Services": [
     {
-      "Id": "robust",
-      "DisplayName": "Casperia-Dev Robust",
+      "Id": "grid_core",
+      "DisplayName": "OpenSim Robust (EDIT ME - paths below are placeholders)",
       "RequiresVolume": "servers",
-      "ExePath": "S:\\Opensim\\Casperia-Dev\\Robust.exe",
+      "ExePath": "S:\\PATH\\TO\\YOUR\\OpenSim\\Robust.exe",
       "Arguments": "-inifile=Robust.HG.ini -background=true",
-      "WorkingDirectory": "S:\\Opensim\\Casperia-Dev",
-      "Liveness": { "Type": "http", "Url": "http://127.0.0.1:9002/store" },
+      "WorkingDirectory": "S:\\PATH\\TO\\YOUR\\OpenSim",
+      "Liveness": { "Type": "http", "Url": "http://127.0.0.1:8003/store" },
       "StartupTimeoutSeconds": 90,
+      "AutoRestart": {
+        "Enabled": true,
+        "RestartAttempts": 3,
+        "CrashConfirmSeconds": 10,
+        "AttemptDelaySeconds": 15
+      },
       "AutoLaunch": [
-        { "ServiceId": "sandbox", "DelaySeconds": 5 },
-        { "ServiceId": "welcome_center", "DelaySeconds": 10 }
+        { "ServiceId": "region_a", "DelaySeconds": 5 },
+        { "ServiceId": "region_b", "DelaySeconds": 10 }
       ]
     },
     {
-      "Id": "sandbox",
-      "DisplayName": "Sandbox Region",
+      "Id": "region_a",
+      "DisplayName": "Region A (EDIT ME - paths below are placeholders)",
       "RequiresVolume": "servers",
-      "ExePath": "S:\\Opensim\\Casperia-Dev\\OpenSim.exe",
-      "Arguments": "-inifile=Simulators\\Sandbox\\OpenSim.ini -background=true",
-      "WorkingDirectory": "S:\\Opensim\\Casperia-Dev",
-      "Liveness": { "Type": "http", "Url": "http://127.0.0.1:9018/" },
+      "ExePath": "S:\\PATH\\TO\\YOUR\\OpenSim\\OpenSim.exe",
+      "Arguments": "-inifile=Simulators\\RegionA\\OpenSim.ini -background=true",
+      "WorkingDirectory": "S:\\PATH\\TO\\YOUR\\OpenSim",
+      "Liveness": { "Type": "http", "Url": "http://127.0.0.1:9000/" },
       "StartupTimeoutSeconds": 60
     },
     {
-      "Id": "welcome_center",
-      "DisplayName": "Welcome Center Region",
+      "Id": "region_b",
+      "DisplayName": "Region B (EDIT ME - paths below are placeholders)",
       "RequiresVolume": "servers",
-      "ExePath": "S:\\Opensim\\Casperia-Dev\\OpenSim.exe",
-      "Arguments": "-inifile=Simulators\\Welcome_Center\\OpenSim.ini -background=true",
-      "WorkingDirectory": "S:\\Opensim\\Casperia-Dev",
-      "Liveness": { "Type": "http", "Url": "http://127.0.0.1:9004/" },
+      "ExePath": "S:\\PATH\\TO\\YOUR\\OpenSim\\OpenSim.exe",
+      "Arguments": "-inifile=Simulators\\RegionB\\OpenSim.ini -background=true",
+      "WorkingDirectory": "S:\\PATH\\TO\\YOUR\\OpenSim",
+      "Liveness": { "Type": "http", "Url": "http://127.0.0.1:9001/" },
       "StartupTimeoutSeconds": 60
     },
 

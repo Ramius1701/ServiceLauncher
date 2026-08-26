@@ -2,11 +2,17 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>ServiceLauncher</RootNamespace>
     <AssemblyName>ServiceLauncher</AssemblyName>
+
+    <!-- Runs both headless (Task Scheduler, no interactive session - GUI
+         is skipped, see Program.cs's Environment.UserInteractive check)
+         and as a GUI when launched manually at the machine. -->
+    <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
 
     <!-- Deployed to C:\ServiceLauncher, deliberately outside any VHDX-
          backed drive, so it can start at boot before that volume is

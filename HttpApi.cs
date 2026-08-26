@@ -1,8 +1,16 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace ServiceLauncher;
+
+// Consumed by MainForm - both the primary instance's own GUI and a
+// second manually-launched instance acting as a client (see Program.cs)
+// talk to this over loopback HTTP rather than the orchestrator directly,
+// so both cases share one code path regardless of which process actually
+// owns the ServiceOrchestrator.
+public record ServiceStatusDto(string Id, string DisplayName, bool Alive);
 
 public class HttpApi
 {
@@ -22,9 +30,35 @@ public class HttpApi
     public void Run()
     {
         HttpListener listener = new HttpListener();
-        listener.Prefixes.Add($"http://+:{_config.ListenPort}/");
-        listener.Start();
-        _log.Info($"Listening on port {_config.ListenPort}.");
+        string wildcardPrefix = $"http://+:{_config.ListenPort}/";
+        try
+        {
+            listener.Prefixes.Add(wildcardPrefix);
+            listener.Start();
+            _log.Info($"Listening on port {_config.ListenPort} (all interfaces).");
+        }
+        catch (HttpListenerException e)
+        {
+            // Binding a wildcard host (+) needs Administrator/URL-ACL
+            // rights on Windows - true for the elevated Task Scheduler
+            // deployment this was originally built for, but not for a
+            // plain interactive launch of the GUI (e.g. testing locally,
+            // or the primary instance running before any elevated copy
+            // exists). Falling back to loopback-only means the GUI can
+            // still talk to itself either way - this used to run
+            // synchronously on the main thread, so a bind failure here
+            // crashed the whole (console) app visibly; now that it runs
+            // on a background thread alongside the GUI, an unhandled
+            // exception here would instead kill the entire process
+            // silently, with the GUI window just vanishing - so this
+            // needs to degrade instead of throwing.
+            _log.Info($"Could not bind {wildcardPrefix} ({e.Message}) - falling back to loopback-only. " +
+                      "Remote/away-from-machine triggering needs this run elevated (see README); the local GUI still works.");
+            listener = new HttpListener();
+            listener.Prefixes.Add($"http://127.0.0.1:{_config.ListenPort}/");
+            listener.Start();
+            _log.Info($"Listening on port {_config.ListenPort} (loopback only).");
+        }
 
         while (true)
         {
@@ -51,6 +85,24 @@ public class HttpApi
             if (path == "/status")
             {
                 Respond(ctx, 200, BuildStatusPage());
+                return;
+            }
+
+            // JSON variants for MainForm - same underlying data/actions as
+            // the HTML routes above, just machine-readable for the GUI's
+            // HttpClient instead of a browser.
+            if (path == "/api/status")
+            {
+                RespondJson(ctx, 200, BuildStatusList());
+                return;
+            }
+
+            if (path == "/api/launch")
+            {
+                string apiServiceId = ctx.Request.QueryString["service"] ?? "all";
+                _log.Info($"Launch '{apiServiceId}' requested by {clientIp}");
+                string apiResult = apiServiceId == "all" ? _orchestrator.LaunchAll() : _orchestrator.Launch(apiServiceId);
+                RespondJson(ctx, 200, new { log = apiResult });
                 return;
             }
 
@@ -86,6 +138,13 @@ public class HttpApi
         return sb.ToString();
     }
 
+    private List<ServiceStatusDto> BuildStatusList()
+    {
+        return _config.Services
+            .Select(svc => new ServiceStatusDto(svc.Id, svc.DisplayName, LivenessChecker.IsAlive(svc.Liveness)))
+            .ToList();
+    }
+
     private static bool SecureEquals(string a, string b)
     {
         // Constant-time comparison (CryptographicOperations.FixedTimeEquals)
@@ -109,6 +168,16 @@ public class HttpApi
         ctx.Response.StatusCode = statusCode;
         ctx.Response.ContentType = "text/html; charset=utf-8";
         byte[] buf = Encoding.UTF8.GetBytes(body);
+        ctx.Response.ContentLength64 = buf.Length;
+        ctx.Response.OutputStream.Write(buf, 0, buf.Length);
+        ctx.Response.OutputStream.Close();
+    }
+
+    private static void RespondJson(HttpListenerContext ctx, int statusCode, object body)
+    {
+        ctx.Response.StatusCode = statusCode;
+        ctx.Response.ContentType = "application/json; charset=utf-8";
+        byte[] buf = JsonSerializer.SerializeToUtf8Bytes(body);
         ctx.Response.ContentLength64 = buf.Length;
         ctx.Response.OutputStream.Write(buf, 0, buf.Length);
         ctx.Response.OutputStream.Close();

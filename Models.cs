@@ -40,6 +40,24 @@ public class ServiceConfig
     // delay - mirrors MBBSLauncher's "auto-launch up to 20 programs after
     // the BBS starts, each with an independent delay timer."
     public List<AutoLaunchEntry> AutoLaunch { get; set; } = new();
+
+    public AutoRestartConfig AutoRestart { get; set; } = new();
+}
+
+// Mirrors MBBSLauncher's RestartManager/AutoRestartSettings ("Stage 1":
+// detect a crash, retry up to RestartAttempts with a cooldown between
+// tries) - deliberately without its "Stage 2" (reboot the whole machine
+// once Stage 1 is exhausted). That's reasonable on a single-BBS machine,
+// but this host runs several independent services (Robust + multiple
+// regions) - rebooting because one region crashed would take all of them
+// down. Ask explicitly if a reboot escalation is wanted; it's not built
+// in here by default the way it is (off by default) in the reference.
+public class AutoRestartConfig
+{
+    public bool Enabled { get; set; } = false;
+    public int RestartAttempts { get; set; } = 3;
+    public int CrashConfirmSeconds { get; set; } = 10;
+    public int AttemptDelaySeconds { get; set; } = 15;
 }
 
 public class LivenessConfig
