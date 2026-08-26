@@ -103,6 +103,7 @@ public class MainForm : Form
 
         ContextMenuStrip trayMenu = new ContextMenuStrip();
         trayMenu.Items.Add("Show", null, (_, _) => ShowFromTray());
+        trayMenu.Items.Add("Check for Updates...", null, async (_, _) => await CheckForUpdatesAsync());
         trayMenu.Items.Add("Exit", null, (_, _) => { _reallyExit = true; Close(); });
 
         _trayIcon = new NotifyIcon
@@ -226,6 +227,25 @@ public class MainForm : Form
         }
 
         await RefreshStatusAsync();
+    }
+
+    // Manual/on-demand only - never called from Load, the refresh timer,
+    // or anywhere else automatic. This is the only place ServiceLauncher
+    // ever contacts GitHub, and only reports; it never downloads/installs.
+    private async Task CheckForUpdatesAsync()
+    {
+        UpdateCheckResult result = await UpdateChecker.CheckForUpdatesAsync(UpdateChecker.AppVersion);
+
+        string message = !result.Success
+            ? result.ErrorMessage ?? "Update check failed."
+            : result.UpdateAvailable
+                ? $"A new version is available: {result.LatestVersion} ({result.ReleaseTitle})\nYou're running {result.CurrentVersion}.\n\n{result.DownloadUrl}"
+                : result.RunningNewerThanPublished
+                    ? $"You're running {result.CurrentVersion}, newer than the latest published release ({result.LatestVersion})."
+                    : $"You're up to date ({result.CurrentVersion}).";
+
+        MessageBox.Show(message, "ServiceLauncher - Check for Updates", MessageBoxButtons.OK,
+            result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
     }
 
     private void AppendLog(string text)

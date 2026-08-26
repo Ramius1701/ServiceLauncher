@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>ServiceLauncher</RootNamespace>
     <AssemblyName>ServiceLauncher</AssemblyName>
+    <Version>0.1.0</Version>
 
     <!-- Runs both headless (Task Scheduler, no interactive session - GUI
          is skipped, see Program.cs's Environment.UserInteractive check)
