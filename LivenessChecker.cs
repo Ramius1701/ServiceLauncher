@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace ServiceLauncher;
 
@@ -58,8 +60,14 @@ public static class LivenessChecker
         {
             try
             {
-                string? mainModulePath = proc.MainModule?.FileName;
-                if (mainModulePath == null || !string.Equals(mainModulePath, cfg.ProcessPath, StringComparison.OrdinalIgnoreCase))
+                // Process.MainModule (not QueryImagePath) for the path
+                // check: a 64-bit ServiceLauncher can't enumerate a
+                // 32-bit process's modules (or vice versa) - confirmed
+                // live against a real 32-bit MajorBBS (wgsappgo.exe)
+                // process, where MainModule throws "Unable to enumerate
+                // the process modules" but this still resolves correctly.
+                string? imagePath = QueryImagePath(proc.Id);
+                if (imagePath == null || !string.Equals(imagePath, cfg.ProcessPath, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 if (string.IsNullOrEmpty(cfg.ProcessArgsContains))
@@ -71,12 +79,41 @@ public static class LivenessChecker
             }
             catch
             {
-                // MainModule throws for processes we don't have access to
-                // (a different user, a protected system process) - just
-                // not a match, not a fatal error.
+                // Process we don't have access to at all (a different
+                // user, a protected system process) - just not a match,
+                // not a fatal error.
             }
         }
         return false;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool QueryFullProcessImageName(IntPtr hProcess, int dwFlags, StringBuilder lpExeName, ref int lpdwSize);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint processAccess, bool bInheritHandle, int processId);
+
+    [DllImport("kernel32.dll")]
+    private static extern bool CloseHandle(IntPtr hObject);
+
+    private const uint ProcessQueryLimitedInformation = 0x1000;
+
+    private static string? QueryImagePath(int pid)
+    {
+        IntPtr handle = OpenProcess(ProcessQueryLimitedInformation, false, pid);
+        if (handle == IntPtr.Zero)
+            return null;
+
+        try
+        {
+            StringBuilder sb = new StringBuilder(1024);
+            int size = sb.Capacity;
+            return QueryFullProcessImageName(handle, 0, sb, ref size) ? sb.ToString() : null;
+        }
+        finally
+        {
+            CloseHandle(handle);
+        }
     }
 
     private static string GetCommandLine(int processId)

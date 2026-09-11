@@ -178,6 +178,14 @@ liveness checks, chained auto-launch - needs no other changes.
   `"http"` liveness (a raw TCP connect to each region's own port)
   wherever a service has a distinguishable port; reserve `"process"`
   for genuinely singleton programs.
+- **"process" liveness works across a 32/64-bit mismatch on purpose.**
+  It resolves a running process's exe path via `QueryFullProcessImageName`
+  (`LivenessChecker.QueryImagePath`), not `Process.MainModule` - the
+  latter throws ("Unable to enumerate the process modules") when a
+  64-bit ServiceLauncher inspects a 32-bit process, confirmed live
+  against a real 32-bit MajorBBS (`wgsappgo.exe`). Silently falling back
+  to MainModule here would make "process" liveness permanently report
+  such a service as down even while it's genuinely running.
 - **Everything is idempotent.** Hitting `/launch` again for something
   already running just confirms it's up rather than starting a second
   copy - a stale bookmark or a double-tap on a slow phone connection
