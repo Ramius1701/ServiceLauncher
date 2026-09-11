@@ -66,5 +66,14 @@
       },
       "StartupTimeoutSeconds": 60
     }
-  ]
+  ],
+
+  "RegionDiscovery": {
+    "Enabled": false,
+    "SimulatorsDirectory": "S:\\PATH\\TO\\YOUR\\OpenSim\\Simulators",
+    "ExePath": "S:\\PATH\\TO\\YOUR\\OpenSim\\OpenSim.exe",
+    "WorkingDirectory": "S:\\PATH\\TO\\YOUR\\OpenSim",
+    "RequiresVolume": "servers",
+    "StartupTimeoutSeconds": 60
+  }
 }

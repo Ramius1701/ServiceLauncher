@@ -101,8 +101,7 @@ public class HttpApi
             {
                 string apiServiceId = ctx.Request.QueryString["service"] ?? "all";
                 _log.Info($"Launch '{apiServiceId}' requested by {clientIp}");
-                string apiResult = apiServiceId == "all" ? _orchestrator.LaunchAll() : _orchestrator.Launch(apiServiceId);
-                RespondJson(ctx, 200, new { log = apiResult });
+                RespondJson(ctx, 200, new { log = Dispatch(apiServiceId) });
                 return;
             }
 
@@ -115,8 +114,7 @@ public class HttpApi
             string serviceId = ctx.Request.QueryString["service"] ?? "all";
             _log.Info($"Launch '{serviceId}' requested by {clientIp}");
 
-            string result = serviceId == "all" ? _orchestrator.LaunchAll() : _orchestrator.Launch(serviceId);
-            Respond(ctx, 200, "<h1>Service Launcher</h1><pre>" + WebUtility.HtmlEncode(result) + "</pre>");
+            Respond(ctx, 200, "<h1>Service Launcher</h1><pre>" + WebUtility.HtmlEncode(Dispatch(serviceId)) + "</pre>");
         }
         catch (Exception e)
         {
@@ -124,6 +122,17 @@ public class HttpApi
             try { Respond(ctx, 500, "<h1>Error</h1>"); } catch { /* connection may already be gone */ }
         }
     }
+
+    // "all" launches every configured service (plus discovered ones -
+    // see ServiceOrchestrator.LaunchAll); "discover" runs region
+    // discovery standalone, without touching the explicitly configured
+    // services; anything else is a specific service id.
+    private string Dispatch(string serviceId) => serviceId switch
+    {
+        "all" => _orchestrator.LaunchAll(),
+        "discover" => _orchestrator.DiscoverAndLaunch(),
+        _ => _orchestrator.Launch(serviceId),
+    };
 
     private string BuildStatusPage()
     {

@@ -7,6 +7,28 @@ public class LauncherConfig
     public string LogFile { get; set; } = "launcher.log";
     public List<VolumeConfig> Volumes { get; set; } = new();
     public List<ServiceConfig> Services { get; set; } = new();
+    public RegionDiscoveryConfig? RegionDiscovery { get; set; }
+}
+
+// Mirrors the grid's own control batch script's "Discover & Launch
+// Store-Ordered Regions" option: scans SimulatorsDirectory for
+// subfolders with an OpenSim.ini that AREN'T already one of the
+// explicitly configured Services (matched by each service's own
+// "Simulators\<folder>\OpenSim.ini" Arguments, so there's nothing extra
+// to keep in sync) and launches those too. Unlike the batch script,
+// each discovered region gets a real liveness check - "process" type,
+// disambiguated by its own -inifile= argument, since a freshly
+// Store-ordered region's port isn't known ahead of time the way an
+// explicitly configured one's is.
+public class RegionDiscoveryConfig
+{
+    public bool Enabled { get; set; } = false;
+    public string SimulatorsDirectory { get; set; } = "";
+    public string ExePath { get; set; } = "";
+    public string WorkingDirectory { get; set; } = "";
+    public string? RequiresVolume { get; set; }
+    public bool UseShellExecute { get; set; } = false;
+    public int StartupTimeoutSeconds { get; set; } = 60;
 }
 
 // A drive that has to be mounted before anything living on it can start -

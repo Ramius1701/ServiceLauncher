@@ -116,6 +116,44 @@ control surface, not a replacement for remote triggering.
 - `GET /api/launch?...` / `GET /api/status?...` - same as above, JSON
   instead of HTML. What the GUI itself calls; also handy if you're
   scripting against this rather than viewing it in a browser.
+- `GET /launch?service=discover&token=...` (or `/api/launch?...`) -
+  scans for and launches any region not already covered by an explicit
+  `Services` entry - see Region discovery below. `service=all` already
+  includes this; use `discover` on its own only if you want *just* newly
+  found regions without touching the explicitly configured ones.
+
+### Region discovery
+
+If your grid lets avatars order new regions from an in-world store, new
+region folders can appear under `Simulators\` at any time - a static
+`services.json` list can't know about those ahead of time. Set
+`RegionDiscovery` in `services.json` to have ServiceLauncher scan for
+them itself, mirroring what the grid's own control batch script's
+"Discover & Launch Store-Ordered Regions" option does:
+
+```json
+"RegionDiscovery": {
+  "Enabled": true,
+  "SimulatorsDirectory": "S:\\PATH\\TO\\YOUR\\OpenSim\\Simulators",
+  "ExePath": "S:\\PATH\\TO\\YOUR\\OpenSim\\OpenSim.exe",
+  "WorkingDirectory": "S:\\PATH\\TO\\YOUR\\OpenSim",
+  "RequiresVolume": "servers",
+  "StartupTimeoutSeconds": 60
+}
+```
+
+Any subfolder of `SimulatorsDirectory` containing an `OpenSim.ini` that
+isn't already referenced by one of your explicit `Services` entries (by
+its `-inifile=Simulators\<folder>\OpenSim.ini` argument - nothing extra
+to keep in sync) gets launched with `-inifile=Simulators\<folder>\
+OpenSim.ini -background=true`. Since a freshly discovered region's port
+isn't known ahead of time the way an explicitly configured one's is,
+discovered regions get "process"-type liveness (disambiguated by their
+own `-inifile=` argument) rather than "http" - no need to go find the
+port. Two things explicit services get that discovered ones don't:
+they're not watched by crash auto-restart, and they don't show up in
+`/status` between discovery runs (both need an explicit `services.json`
+entry, same as before).
 
 ## Porting to Linux / Docker / a VM host
 
