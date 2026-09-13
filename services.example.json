@@ -26,11 +26,7 @@
         "RestartAttempts": 3,
         "CrashConfirmSeconds": 10,
         "AttemptDelaySeconds": 15
-      },
-      "AutoLaunch": [
-        { "ServiceId": "region_a", "DelaySeconds": 5 },
-        { "ServiceId": "region_b", "DelaySeconds": 10 }
-      ]
+      }
     },
     {
       "Id": "region_a",
@@ -40,7 +36,8 @@
       "Arguments": "-inifile=Simulators\\RegionA\\OpenSim.ini -background=true",
       "WorkingDirectory": "S:\\PATH\\TO\\YOUR\\OpenSim",
       "Liveness": { "Type": "http", "Url": "http://127.0.0.1:9000/" },
-      "StartupTimeoutSeconds": 60
+      "StartupTimeoutSeconds": 60,
+      "AutoRestart": { "Enabled": true, "RestartAttempts": 3, "CrashConfirmSeconds": 10, "AttemptDelaySeconds": 15 }
     },
     {
       "Id": "region_b",
@@ -50,7 +47,8 @@
       "Arguments": "-inifile=Simulators\\RegionB\\OpenSim.ini -background=true",
       "WorkingDirectory": "S:\\PATH\\TO\\YOUR\\OpenSim",
       "Liveness": { "Type": "http", "Url": "http://127.0.0.1:9001/" },
-      "StartupTimeoutSeconds": 60
+      "StartupTimeoutSeconds": 60,
+      "AutoRestart": { "Enabled": true, "RestartAttempts": 3, "CrashConfirmSeconds": 10, "AttemptDelaySeconds": 15 }
     },
 
     {
@@ -64,7 +62,8 @@
         "Type": "process",
         "ProcessPath": "S:\\PATH\\TO\\YOUR\\wgsappgo.exe"
       },
-      "StartupTimeoutSeconds": 60
+      "StartupTimeoutSeconds": 60,
+      "AutoRestart": { "Enabled": true, "RestartAttempts": 3, "CrashConfirmSeconds": 10, "AttemptDelaySeconds": 15 }
     }
   ],
 
